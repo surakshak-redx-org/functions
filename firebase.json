@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "source": ".",
+    "codebase": "default",
+    "predeploy": ["yarn --cwd \"$RESOURCE_DIR\" build"],
+    "ignore": ["node_modules", ".git", ".github", "src", "tests", "*.log", "coverage", ".yarn"]
+  },
+  "emulators": {
+    "functions": { "port": 5001 },
+    "firestore": { "port": 8080 },
+    "ui": { "enabled": true }
+  }
+}
