@@ -1,0 +1,27 @@
+node_modules/
+lib/
+coverage/
+.firebase/
+*.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.env
+sa.json
+service-account*.json
+
+# Yarn (node-modules linker): keep releases + plugins, ignore the rest
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.yarn/cache
+.yarn/install-state.gz
+.pnp.*
