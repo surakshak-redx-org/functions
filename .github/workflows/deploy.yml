@@ -1,0 +1,49 @@
+name: Deploy Functions
+
+# Only staging and production deploy. `develop` is the integration branch and
+# runs pr-checks.yml only — matching the app repo's deploy policy.
+#
+# There is a single Firebase project (surakshak-2869a) behind every tier, so
+# both branches deploy the same functions to the same project; a push to
+# `production` is the authoritative (idempotent) promote.
+on:
+  push:
+    branches: [staging, production]
+
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Firebase
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .yarn/cache
+          key: yarn-${{ hashFiles('yarn.lock') }}
+      - run: yarn install --immutable
+      - run: yarn build
+
+      - name: Write service account credentials
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+
+      - name: Deploy functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          yarn firebase deploy --only functions \
+            --project surakshak-2869a \
+            --non-interactive \
+            --force
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
