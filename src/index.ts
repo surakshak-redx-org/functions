@@ -14,5 +14,8 @@ export { onPostReported } from './moderation/onPostReported';
 // Phase 6+ — Notifications
 export * from './notifications';
 
+// Safe Journey — overdue backstop push
+export { checkOverdueJourneys } from './safety/checkOverdueJourneys';
+
 // Phase 9 — Admin Triggers
 export * from './admin';
