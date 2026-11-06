@@ -35,6 +35,19 @@ jobs:
         run: |
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
 
+      # `.env.*` is gitignored, so params that are not secrets are supplied to
+      # the non-interactive deploy from GitHub repository variables
+      # (Settings → Secrets and variables → Actions → Variables).
+      - name: Write function params
+        env:
+          ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID }}
+        run: |
+          if [ -z "$ONESIGNAL_APP_ID" ]; then
+            echo "::error::Repository variable ONESIGNAL_APP_ID is not set"
+            exit 1
+          fi
+          printf 'ONESIGNAL_APP_ID=%s\n' "$ONESIGNAL_APP_ID" > .env.surakshak-2869a
+
       - name: Deploy functions
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
@@ -46,4 +59,4 @@ jobs:
 
       - name: Clean up credentials
         if: always()
-        run: rm -f "$RUNNER_TEMP/sa.json"
+        run: rm -f "$RUNNER_TEMP/sa.json" .env.surakshak-2869a
