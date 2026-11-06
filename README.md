@@ -127,8 +127,14 @@ match /liveLocationSessions/{sessionId} {
   OneSignal only, so this function pushes through OneSignal's REST API:
   - `firebase functions:secrets:set ONESIGNAL_REST_API_KEY` (OneSignal →
     Settings → Keys & IDs → REST API key)
-  - `ONESIGNAL_APP_ID` param — set in `.env.surakshak-2869a` (or answer the
-    prompt on first deploy) with the same app id the mobile app uses.
+  - `ONESIGNAL_APP_ID` param — the same app id the mobile app uses. CI
+    deploys non-interactively and `.env.*` is gitignored, so set it as a
+    GitHub **repository variable** `ONESIGNAL_APP_ID` (Settings → Secrets
+    and variables → Actions → Variables); the deploy workflow writes
+    `.env.surakshak-2869a` from it. For a local `yarn deploy`, create that
+    file yourself or answer the prompt.
+  - The CI service account needs **Secret Manager Admin** (the deploy binds
+    the secret to the function), and the Secret Manager API must be enabled.
 - **Firestore index** for `checkOverdueJourneys`: composite on
   `safeJourneySessions` — `status` ASC, `expectedArrivalAt` ASC.
 - **Firestore index** for `detectLostContact`: composite on
