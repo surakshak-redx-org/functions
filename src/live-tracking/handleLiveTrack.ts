@@ -97,6 +97,9 @@ export async function handleLiveTrack(req: LiveTrackRequest, res: LiveTrackReply
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Browsers hide non-safelisted headers from cross-origin pages unless exposed;
+  // the page needs Retry-After to know how long to back off after a 429.
+  res.setHeader('Access-Control-Expose-Headers', 'Retry-After');
 
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');

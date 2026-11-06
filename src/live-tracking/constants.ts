@@ -27,11 +27,11 @@ export const LIVE_TRACK_MAX_INSTANCES = 5;
 /**
  * Origins allowed to call `liveTrack` from a browser. CORS is not the access
  * control here (the token is), but it stops other sites embedding the API.
- * Add Vercel preview origins here if previews need to work.
+ * The production landing site plus local development; add origins here if
+ * that changes.
  */
 export const ALLOWED_ORIGINS: string[] = [
   'https://landing-surakshak.vercel.app',
-  'https://surakshak.app',
   'http://localhost:3000',
 ];
 
