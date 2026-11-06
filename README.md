@@ -74,8 +74,13 @@ Notes:
 
 - Rate limits are per instance (in memory), so they are a best-effort brake;
   `maxInstances` bounds the total.
-- `ALLOWED_ORIGINS` (CORS) lists the landing origin(s). **Add Vercel preview
-  origins to it if previews should be able to call the API.**
+- `ALLOWED_ORIGINS` (CORS) allows `https://landing-surakshak.vercel.app` and
+  `http://localhost:3000` (local landing development).
+  Add an origin to it if another site (e.g. a Vercel preview) needs to call
+  the API. `Retry-After` is exposed via `Access-Control-Expose-Headers` so the
+  page can read the 429 wait time.
+- `tests/liveTrackContract.test.ts` holds a strict validator of the 200 body
+  shape; update it together with the landing page's contract.
 - `detectLostContact` does **not** escalate (no SMS or push). Sessions hold
   only local contact ids, not phone numbers; the channel is an open product
   decision.

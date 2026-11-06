@@ -191,6 +191,7 @@ describe('handleLiveTrack', () => {
       expect(result.headers['Cache-Control']).toBe('no-store');
       expect(result.headers['X-Robots-Tag']).toBe('noindex, nofollow');
       expect(result.headers['X-Content-Type-Options']).toBe('nosniff');
+      expect(result.headers['Access-Control-Expose-Headers']).toBe('Retry-After');
     }
   });
 
