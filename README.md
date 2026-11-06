@@ -63,3 +63,11 @@ tests/               ← Jest + firebase-functions-test
   Artifact Registry, Eventarc, Cloud Run, Pub/Sub.
 - **Branch protection** on `develop` / `staging` / `production` mirroring the
   app repo (no direct push, PR + 1 approval + passing checks).
+- **OneSignal (for `checkOverdueJourneys`)** — the app registers pushes with
+  OneSignal only, so this function pushes through OneSignal's REST API:
+  - `firebase functions:secrets:set ONESIGNAL_REST_API_KEY` (OneSignal →
+    Settings → Keys & IDs → REST API key)
+  - `ONESIGNAL_APP_ID` param — set in `.env.surakshak-2869a` (or answer the
+    prompt on first deploy) with the same app id the mobile app uses.
+- **Firestore index** for `checkOverdueJourneys`: composite on
+  `safeJourneySessions` — `status` ASC, `expectedArrivalAt` ASC.
