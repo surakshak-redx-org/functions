@@ -37,11 +37,71 @@ yarn deploy  # break-glass only; prefer CI
 src/
   index.ts            ← global options + exports every function
   moderation/         ← community moderation (Phase 5)
+  live-tracking/      ← public live-location share link API + schedulers
   notifications/      ← push notifications (Phase 6+, placeholder)
   admin/             ← admin-triggered functions (Phase 9, placeholder)
   types/             ← Firestore document types, mirrored from the app repo
   utils/firebase.ts  ← Admin SDK init (db / messaging / auth)
 tests/               ← Jest + firebase-functions-test
+```
+
+## Live tracking
+
+Backs the live-location share link that contacts receive by SMS
+(`https://landing-surakshak.vercel.app/track/<token>`). The app writes
+`liveLocationSessions`; Firestore stays owner-only and `liveTrack` is the
+**only public read path**. Code lives in `src/live-tracking/`; tunables are in
+`src/live-tracking/constants.ts`.
+
+| Function              | Trigger                    | Purpose                                                                                           |
+| --------------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `liveTrack`           | HTTPS, public, `GET`       | Token-gated, read-only position + route trail. Allow-listed body; never exposes ids or the token. |
+| `detectLostContact`   | every 1 minute             | Flips stale `active` sessions to `lost_contact`; self-heals those with a fresh fix.               |
+| `cleanupLiveTracking` | daily 03:00 `Asia/Kolkata` | Deletes `points` of sessions expired 24 h – 7 d ago. Session docs are kept.                       |
+
+Endpoint: `https://asia-south1-surakshak-2869a.cloudfunctions.net/liveTrack?t=<token>`
+
+Responses: `200` (`active` / `lost_contact` / `arrived`), `404 {error:'not_found'}`
+(malformed, unknown **and** revoked tokens look identical), `405`,
+`410 {state:'ended'}` (no coordinates), `429` + `Retry-After`, `500`.
+
+Constants: `LOST_CONTACT_SECONDS` 300, `TRAIL_MAX_POINTS` 500,
+`RATE_LIMIT_PER_IP` 30/min, `RATE_LIMIT_PER_TOKEN` 20/min,
+`LIVE_TRACK_MAX_INSTANCES` 5, `SCHEDULER_BATCH_LIMIT` 200,
+`POINTS_RETENTION_HOURS` 24, `POINTS_SWEEP_WINDOW_DAYS` 7.
+
+Notes:
+
+- Rate limits are per instance (in memory), so they are a best-effort brake;
+  `maxInstances` bounds the total.
+- `ALLOWED_ORIGINS` (CORS) lists the landing origin(s). **Add Vercel preview
+  origins to it if previews should be able to call the API.**
+- `detectLostContact` does **not** escalate (no SMS or push). Sessions hold
+  only local contact ids, not phone numbers; the channel is an open product
+  decision.
+- ETA is not computed here (no Directions API call). `eta` / `destination` are
+  passed through when the session already has them.
+
+### Firestore rules (not in this repo)
+
+Rules live only in the Firebase Console. The Admin SDK bypasses them, but the
+app needs owner-only access to sessions and trail points. Add to the existing
+rules (don't replace unrelated ones; source: app repo
+`docs/live-tracking/functions-spec.md`, section 5):
+
+```
+match /liveLocationSessions/{sessionId} {
+  allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+  allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+  match /points/{pointId} {
+    allow create: if request.auth != null
+      && get(/databases/$(database)/documents/liveLocationSessions/$(sessionId)).data.userId == request.auth.uid;
+    allow read: if request.auth != null
+      && get(/databases/$(database)/documents/liveLocationSessions/$(sessionId)).data.userId == request.auth.uid;
+    allow update, delete: if false;
+  }
+}
 ```
 
 ## Notes
@@ -71,3 +131,9 @@ tests/               ← Jest + firebase-functions-test
     prompt on first deploy) with the same app id the mobile app uses.
 - **Firestore index** for `checkOverdueJourneys`: composite on
   `safeJourneySessions` — `status` ASC, `expectedArrivalAt` ASC.
+- **Firestore index** for `detectLostContact`: composite on
+  `liveLocationSessions` — `isActive` ASC, `status` ASC, `lastFixAt` ASC.
+  (Serves both of its queries. `liveTrack` and `cleanupLiveTracking` use
+  automatic single-field indexes.)
+- **Firestore rules** for `liveLocationSessions` + `points` — see
+  [Live tracking](#live-tracking).

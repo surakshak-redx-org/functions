@@ -17,5 +17,8 @@ export * from './notifications';
 // Safe Journey — overdue backstop push
 export { checkOverdueJourneys } from './safety/checkOverdueJourneys';
 
+// Live tracking — public share-link API, lost-contact detection, cleanup
+export * from './live-tracking';
+
 // Phase 9 — Admin Triggers
 export * from './admin';
