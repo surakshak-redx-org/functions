@@ -10,6 +10,7 @@ setGlobalOptions({
 
 // Phase 5 — Community Moderation
 export { onPostReported } from './moderation/onPostReported';
+export { reportCommunityPost } from './moderation/reportCommunityPost';
 
 // Phase 6+ — Notifications
 export * from './notifications';

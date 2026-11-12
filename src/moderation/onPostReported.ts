@@ -4,15 +4,7 @@ import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import type { AdminUser } from '../types/admin.types';
 import type { CommunityPost } from '../types/community.types';
 import { db, messaging, FieldValue } from '../utils/firebase';
-
-/**
- * Report count at which the app auto-hides a community post. Kept here only for
- * logging / notification copy — the trigger keys off the `isHidden` transition,
- * not this number (see below).
- *
- * Mirrors `APP_CONFIG.COMMUNITY_REPORT_HIDE_THRESHOLD` in the app repo.
- */
-const REPORT_THRESHOLD = 3;
+import { COMMUNITY_REPORT_HIDE_THRESHOLD } from './reportThreshold';
 
 /** FCM error codes that mean a stored token is dead and should be removed. */
 const DEAD_TOKEN_CODES = new Set<string>([
@@ -25,7 +17,7 @@ const DEAD_TOKEN_CODES = new Set<string>([
  *
  * When a post transitions from visible to hidden (`isHidden` false -> true), it
  * has just been auto-hidden by the app after reaching
- * {@link REPORT_THRESHOLD} reports (see `reportPost()` in the app repo's
+ * {@link COMMUNITY_REPORT_HIDE_THRESHOLD} reports (see `reportPost()` in the app repo's
  * `src/services/firebase/community.service.ts`). We notify every admin so the
  * post can be reviewed and either restored or permanently removed.
  *
@@ -61,7 +53,7 @@ export const onPostReported = onDocumentUpdated(
     logger.info('Post hidden — notifying admins', {
       postId,
       reportCount: after.reportCount,
-      threshold: REPORT_THRESHOLD,
+      threshold: COMMUNITY_REPORT_HIDE_THRESHOLD,
       city: after.city,
       state: after.state,
     });
